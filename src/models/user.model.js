@@ -10,6 +10,7 @@ const userschema = new mongoose.Schema(
         email: {
             type: String,
             required: [true, "Email is Required"],
+            unique: true,
             trim: true,
             lowercase: true
         },
@@ -21,6 +22,10 @@ const userschema = new mongoose.Schema(
         isActive: {
             type: Boolean,
             default: true
+        },
+        profile: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'UserProfile'
         }
     },
     {

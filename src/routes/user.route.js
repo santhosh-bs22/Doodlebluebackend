@@ -10,6 +10,8 @@ router.delete("/users/:id", protect, usercontroller.deleteUser);
 router.put("/users/:id", protect, usercontroller.updateUser);
 router.post("/login",  usercontroller.login);
 router.delete("/soft/:id", protect, usercontroller.softdeleteUser);
+router.post("/profile", protect, usercontroller.addUserProfile)
+router.get("/users-with-profiles", protect, usercontroller.getAllUserwithoutPop)
 
 module.exports = router
 

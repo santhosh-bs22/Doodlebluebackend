@@ -1,6 +1,8 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcrypt")
-const jwtservices = require("../jwt/jwt.services.js")
+const jwtservices = require("../jwt/jwt.services.js");
+const mongoose = require("mongoose");
+const userProfile = require("../models/user.profile.model.js")
 
 
 class UserServives {
@@ -17,8 +19,26 @@ class UserServives {
         return user;
     }
     async getAllUser() {
-        const users = await User.find();
+        const users = await User.find({ isActive: true }).populate("profile");
         return users;
+    }
+
+    async getAllUserwithoutPop() {
+        const users = await User.find({ isActive: true });
+        const userid = users.map(user => user._id);
+        console.log("User IDs:", userid);
+        const userProfiles = await userProfile.find({ user: { $in: userid } });
+        console.log("User Profiles:", userProfiles);
+
+        const userwithProfiles = users.map(user => {
+            const profile = userProfiles.find(profile => profile.user.toString() === user._id.toString());
+            return {
+                ...user.toObject(),
+                profile: profile || null
+            };
+        }
+        );
+        return userwithProfiles;
     }
 
     async getUserByQuery(name, email) {
@@ -82,6 +102,9 @@ class UserServives {
         if (!user) {
             throw new Error("User not Found");
         }
+        if (!user.isActive) {
+            throw new Error("Account was inactive");
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
@@ -103,6 +126,27 @@ class UserServives {
         // });
         return { user: userWithoutPassword, token }
     }
-}
+    async adduserProfile(userid, profiledata) {
+        if (!mongoose.isValidObjectId(userid)) {
+            throw new Error("Invalid User ID")
+        }
+        const user = await User.findById(userid)
 
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        const newprofile = await userProfile.create({
+            user: userid,
+            age: profiledata.age,
+            dob: profiledata.dob,
+            bio: profiledata.bio
+        });
+
+        user.profile = newprofile._id;
+        await user.save();
+
+        return newprofile
+    }
+}
 module.exports = new UserServives();

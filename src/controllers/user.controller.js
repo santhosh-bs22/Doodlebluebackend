@@ -46,6 +46,25 @@ class UserController {
         }
     }
 
+       async getAllUserwithoutPop(req, res) {
+        try {
+            const result = await userService.getAllUserwithoutPop();
+            return res.status(200).json({
+                success: true,
+                message: "Users fetched successfully",
+                count: result.length,
+                data: result
+            })
+        }
+        catch (error) {
+            console.log(error.message);
+            return res.status(500).json({
+                success: false,
+                message: error.message
+            })
+        }
+    }
+
     async getUserByQuery(req, res) {
         try {
             const { name, email } = req.query;
@@ -146,6 +165,29 @@ class UserController {
                 message: error.message
             })
 
+        }
+    }
+    async addUserProfile(req, res) {
+        try {
+            const userid = req.user.id
+            const { age, dob, bio } = req.body
+            if (!userid) {
+                return res.status(400).json({
+                    success: false,
+                    message: "User ID is required"
+                })
+            }
+            const newuserprofile = await userService.adduserProfile(userid, { age, dob, bio })
+            res.status(201).json({ success: true, message: "user profile added successfully", data: newuserprofile })
+        } catch (error) {
+            if (error.code === 11000) {
+                return res.status(409).json({ success: false, message: "A profile for this user already exits" })
+            }
+            console.log(error.message);
+            return res.status(401).json({
+                success: false,
+                message: error.message
+            })
         }
     }
 
